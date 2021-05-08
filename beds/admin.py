@@ -14,6 +14,9 @@ class HospitalAdmin(admin.ModelAdmin):
     ('Bed Information', {
         'fields': ('covid_beds', 'normal_beds', 'icu_beds', 'ventilator')
     }),
+    ('User Information', {
+        'fields': ('user',)
+    }),
     )
     list_display = ('name', 'covid_beds', 'normal_beds', 'icu_beds', 'ventilator', 'total_beds')
     list_filter = ('location', 'district', 'sector')

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 # after adding all models here, execute the below commands
@@ -34,6 +35,7 @@ class Hospital(models.Model):
     normal_beds = models.IntegerField()
     icu_beds = models.IntegerField()
     ventilator = models.IntegerField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name+" "+self.location
