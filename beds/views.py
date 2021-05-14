@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Hospital, Patient, BedAllocation
 from django.db.models import Sum
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .forms import PatientForm
+from .forms import PatientForm, BedAllocationForm
 from django.shortcuts import redirect
 # Create your views here.
 
@@ -34,8 +34,60 @@ def index(request):
 
 @login_required
 def dashboard(request):
-    
-    return render(request, 'beds/dashboard.html')
+    user = request.user
+    hospital = Hospital.objects.get(user=user)
+    bedallocations = BedAllocation.objects.filter(hospital=hospital)
+    context = {
+        'bedallocations': bedallocations,
+        'hospital': hospital
+    }
+    return render(request, 'beds/dashboard.html', context)
+
+@login_required
+def bedallocate(request):
+    user = request.user
+    hospital = Hospital.objects.get(user=user)
+    form = BedAllocationForm(data=request.POST or None, hospital=hospital or None)
+    context = {
+        'form': form,
+    }
+    if form.is_valid():
+        obj=form.save(commit=False)
+        obj.hospital = hospital
+        patient = Patient.objects.get(pk=obj.patient.id)
+        patient.status = 'A'
+        patient.save()
+        if obj.category == 'C':
+            hospital.covid_beds = hospital.covid_beds - 1
+        elif obj.category == 'N':
+            hospital.normal_beds = hospital.normal_beds - 1
+        elif obj.category == 'I':
+             hospital.icu_beds = hospital.icu_beds - 1
+        else:
+            hospital.ventilator = hospital.ventilator - 1
+        hospital.save()
+        obj.save()
+        return redirect('dashboard')
+    return render(request, 'beds/bedallocate.html', context)
+
+@login_required
+def discharge(request, id):
+    bed = BedAllocation.objects.get(pk=id)
+    hospital = Hospital.objects.get(pk=bed.hospital.id)
+    patient = Patient.objects.get(pk=bed.patient.id)
+    patient.status = 'D'
+    patient.save()
+    if bed.category == 'C':
+        hospital.covid_beds = hospital.covid_beds + 1
+    elif bed.category == 'N':
+        hospital.normal_beds = hospital.normal_beds + 1
+    elif bed.category == 'I':
+         hospital.icu_beds = hospital.icu_beds + 1
+    else:
+        hospital.ventilator = hospital.ventilator + 1
+    hospital.save()
+    bed.delete()
+    return redirect('dashboard')
 
 def patient_reg(request):
     form = PatientForm(request.POST or None)

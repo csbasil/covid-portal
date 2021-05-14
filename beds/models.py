@@ -35,7 +35,7 @@ class Hospital(models.Model):
     normal_beds = models.IntegerField()
     icu_beds = models.IntegerField()
     ventilator = models.IntegerField()
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.name+" "+self.location
@@ -72,6 +72,5 @@ class BedAllocation(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     category = models.CharField(max_length=2, choices=ct)
-
     def __str__(self):
         return self.patient.name +" admitted on "+self.hospital.name
